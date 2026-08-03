@@ -359,4 +359,11 @@ window.MW = window.MW || {};
   M.exportJSON = () => JSON.stringify(payload(), null, 2);
   M.importJSON = (txt) => { const r = JSON.parse(txt); mergeRemote(r); M.save(); return true; };
 
+  /* ---------------- PWA：注册 Service Worker ---------------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+
 })(window.MW);
