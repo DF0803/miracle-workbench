@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#12275a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Miracle 工作台 · 真相只有一个">
+<title>Miracle 工作台 · 真相只有一个</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2312275a'/%3E%3Cpath d='M32 32 L14 22 L14 42 Z' fill='%23e4002b'/%3E%3Cpath d='M32 32 L50 22 L50 42 Z' fill='%23e4002b'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23f5b301'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="boot" id="boot">
+  <div class="boot-inner">
+    <svg class="boot-glass" viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#f5b301" stroke-width="6"/>
+      <circle cx="50" cy="50" r="28" fill="rgba(245,179,1,.12)"/>
+      <rect x="74" y="74" width="34" height="11" rx="5" transform="rotate(45 74 74)" fill="#f5b301"/>
+    </svg>
+    <div class="boot-title">MIRACLE</div>
+    <div class="boot-sub">真相只有一个 · 正在推理今日事项…</div>
+  </div>
+</div>
+
+<div class="app" id="app">
+
+  <!-- ============ 侧边导航 ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-bow" aria-hidden="true">
+        <svg viewBox="0 0 48 32"><path d="M24 16 L2 4 L2 28 Z" fill="#e4002b"/><path d="M24 16 L46 4 L46 28 Z" fill="#e4002b"/><circle cx="24" cy="16" r="6" fill="#b3001f"/><circle cx="24" cy="16" r="2.4" fill="#f5b301"/></svg>
+      </span>
+      <div class="brand-text">
+        <b>Miracle</b>
+        <small>DETECTIVE WORKBENCH</small>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item is-active" data-view="home" style="--nav:#1d3461">
+        <span class="nav-ico">🕵️</span><span class="nav-label">首页</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="hot" style="--nav:#e4002b">
+        <span class="nav-ico">🔥</span><span class="nav-label">每日热搜</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="film" style="--nav:#c026d3">
+        <span class="nav-ico">🎬</span><span class="nav-label">影视推荐</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="study" style="--nav:#1f6feb">
+        <span class="nav-ico">📖</span><span class="nav-label">每日学习</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="overtime" style="--nav:#7b5cff">
+        <span class="nav-ico">🌙</span><span class="nav-label">加班记录</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="wool" style="--nav:#00976b">
+        <span class="nav-ico">🐑</span><span class="nav-label">羊毛记录</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="ledger" style="--nav:#caa53a">
+        <span class="nav-ico">🧾</span><span class="nav-label">记账</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="todo" style="--nav:#d98200">
+        <span class="nav-ico">📌</span><span class="nav-label">待办事项</span><span class="nav-dot"></span>
+      </button>
+      <button class="nav-item" data-view="game" style="--nav:#00a6b8">
+        <span class="nav-ico">🎮</span><span class="nav-label">游戏</span><span class="nav-dot"></span>
+      </button>
+    </nav>
+
+    <div class="side-foot">
+      <button class="side-btn" id="btnSync"><span>☁️</span><span id="syncLabel">同步</span></button>
+      <button class="side-btn" id="btnTheme"><span id="themeIco">🌗</span><span>主题</span></button>
+      <div class="side-quote">“真相永远只有一个！”</div>
+    </div>
+  </aside>
+
+  <!-- ============ 主区域 ============ -->
+  <main class="main" id="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="btnMenu" aria-label="菜单">☰</button>
+      <div class="topbar-title">
+        <h1 id="pageTitle">首页</h1>
+        <p id="pageSub">案件编号 #000 · 今日推理简报</p>
+      </div>
+      <div class="topbar-right">
+        <div class="clock" id="clock"></div>
+        <button class="icon-btn" id="btnSync2" title="云端同步">☁️</button>
+        <button class="icon-btn" id="btnTheme2" title="切换主题">🌗</button>
+      </div>
+    </header>
+
+    <div class="views" id="views">
+
+      <!-- ---------- 首页 · 总览 ---------- -->
+      <section class="view is-active" id="view-home">
+        <div class="hero hero-home">
+          <div class="hero-txt">
+            <span class="hero-tag">MIRACLE · DASHBOARD</span>
+            <h2 id="homeHello">今日推理简报</h2>
+            <p id="homeDate">案件编号 #000 · 真相只有一个</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>当前时间</span><b id="homeClock">--:--</b></div>
+            <div class="meta-line"><span>同步状态</span><b id="homeSync">—</b></div>
+          </div>
+        </div>
+        <div id="homeBody"></div>
+      </section>
+
+      <!-- ---------- 每日热搜 ---------- -->
+      <section class="view" id="view-hot">
+        <div class="hero hero-hot">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 001 · TRENDING</span>
+            <h2>每日热搜 · 全网舆情</h2>
+            <p>微博 / 知乎 / 抖音 / 头条 / 百度 / 小红书 六平台聚合，每小时自动侦查一次</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>上次更新</span><b id="hotUpdated">--:--</b></div>
+            <div class="meta-line"><span>下次自动</span><b id="hotCountdown">--:--</b></div>
+            <button class="btn btn-light" id="hotRefresh">立即刷新</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="tabs"><span class="tab-static">🌐 全网聚合 · 6 平台</span></div>
+          <div class="tool-right">
+            <input class="input search" id="hotSearch" placeholder="🔍 过滤关键词…">
+            <label class="switch"><input type="checkbox" id="hotAuto" checked><span></span><em>自动更新</em></label>
+          </div>
+        </div>
+
+        <div id="hotBody" class="hot-body"></div>
+      </section>
+
+      <!-- ---------- 影视推荐 ---------- -->
+      <section class="view" id="view-film">
+        <div class="hero hero-film">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 001b · FILM &amp; DRAMA</span>
+            <h2>影视推荐 · 剧荒急救</h2>
+            <p>电视剧 / 电影 / 动漫，各国佳作一键收藏，想看、在看、已看随手标记</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>已收录</span><b id="filmCount">0</b></div>
+            <div class="meta-line"><span>想看</span><b id="filmWish">0</b></div>
+            <button class="btn btn-light" id="filmAdd">＋ 添加影片</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="tabs" id="filmTabs">
+            <button class="tab is-active" data-kind="all">全部</button>
+            <button class="tab" data-kind="tv">电视剧</button>
+            <button class="tab" data-kind="movie">电影</button>
+            <button class="tab" data-kind="anime">动漫</button>
+          </div>
+          <div class="tool-right">
+            <select class="input" id="filmCountry" style="width:108px"><option value="all">全部国家</option></select>
+            <select class="input" id="filmStatus" style="width:108px">
+              <option value="all">全部状态</option>
+              <option value="wish">想看</option>
+              <option value="watching">在看</option>
+              <option value="done">已看</option>
+            </select>
+            <input class="input search" id="filmSearch" placeholder="🔍 片名 / 类型…">
+          </div>
+        </div>
+
+        <div id="filmBody"></div>
+      </section>
+
+      <!-- ---------- 每日学习 ---------- -->
+      <section class="view" id="view-study">
+        <div class="hero hero-study">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 002 · CATTI &amp; ECONOMIST</span>
+            <h2>每日学习 · 译者修炼</h2>
+            <p>CATTI 三级 / 二级 / 一级 · 笔译口译全覆盖，外加每日一篇经济学人精读</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>连续打卡</span><b id="studyStreak">0 天</b></div>
+            <div class="meta-line"><span>今日进度</span><b id="studyToday">0 / 4</b></div>
+            <button class="btn btn-light" id="studyCheck">今日打卡</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="tabs" id="studyTabs">
+            <button class="tab is-active" data-mod="catti">CATTI 训练</button>
+            <button class="tab" data-mod="eco">经济学人</button>
+            <button class="tab" data-mod="plan">备考计划</button>
+          </div>
+        </div>
+
+        <div id="studyBody"></div>
+      </section>
+
+      <!-- ---------- 加班记录 ---------- -->
+      <section class="view" id="view-overtime">
+        <div class="hero hero-ot">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 003 · OVERTIME</span>
+            <h2>每日加班记录</h2>
+            <p>工时台账 · 加班费估算 · 月度趋势，每一分钟都留下证据</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>本月加班</span><b id="otMonthHours">0 h</b></div>
+            <div class="meta-line"><span>预估补偿</span><b id="otMonthPay">¥0</b></div>
+          </div>
+        </div>
+        <div id="otBody"></div>
+      </section>
+
+      <!-- ---------- 羊毛记录 ---------- -->
+      <section class="view" id="view-wool">
+        <div class="hero hero-wool">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 004 · BONUS HUNT</span>
+            <h2>羊毛记录</h2>
+            <p>返现 / 红包 / 活动 / 信用卡权益，收益到账全程追踪</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>总笔数</span><b id="woolTotal">0</b></div>
+            <div class="meta-line"><span>未收到</span><b id="woolPending">0</b></div>
+            <button class="btn btn-light" id="woolAdd">＋ 记一笔</button>
+          </div>
+        </div>
+        <div id="woolBody"></div>
+      </section>
+
+      <!-- ---------- 记账 ---------- -->
+      <section class="view" id="view-ledger">
+        <div class="hero hero-ledger">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 004b · LEDGER</span>
+            <h2>记账 · 收支台账</h2>
+            <p>每一笔收入与支出都留下线索，月底一眼看清结余</p>
+          </div>
+          <div class="hero-meta">
+            <div class="led-tabs">
+              <button class="tab is-active" id="ledTabGeneral">一般记账</button>
+              <button class="tab" id="ledTabMortgage">房贷</button>
+            </div>
+            <div class="meta-line"><span id="ledMeta1L">本月结余</span><b id="ledgerBalance">¥0</b></div>
+            <div class="meta-line"><span id="ledMeta2L">本月支出</span><b id="ledgerExpense">¥0</b></div>
+            <button class="btn btn-light" id="ledgerAdd">＋ 记一笔</button>
+          </div>
+        </div>
+        <div id="ledgerBody"></div>
+      </section>
+
+      <!-- ---------- 待办事项 ---------- -->
+      <section class="view" id="view-todo">
+        <div class="hero hero-todo">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 005 · TO-DO</span>
+            <h2>待办事项</h2>
+            <p>侦探笔记本：优先级、分类、截止日，一件都别漏掉</p>
+          </div>
+          <div class="hero-meta">
+            <div class="ring" id="todoRing"></div>
+            <button class="btn btn-light" id="todoFocus">＋ 新建待办</button>
+          </div>
+        </div>
+        <div id="todoBody"></div>
+      </section>
+
+      <!-- ---------- 游戏 ---------- -->
+      <section class="view" id="view-game">
+        <div class="hero hero-game">
+          <div class="hero-txt">
+            <span class="hero-tag">CASE 006 · ARCADE</span>
+            <h2>游戏 · 头脑体操</h2>
+            <p>推箱子 / 消消乐 / 数独 / 扫雷，摸鱼也要有技术含量</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-line"><span>今日游玩</span><b id="gamePlayed">0 局</b></div>
+            <div class="meta-line"><span>最高纪录</span><b id="gameBest">—</b></div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <span class="diff-cap">难度</span>
+          <div class="tabs" id="gameDiff">
+            <button class="tab" data-diff="easy">😊 简单</button>
+            <button class="tab is-active" data-diff="normal">🙂 普通</button>
+            <button class="tab" data-diff="hard">😎 困难</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="tabs" id="gameTabs">
+            <button class="tab is-active" data-game="sokoban">📦 推箱子</button>
+            <button class="tab" data-game="match3">💎 消消乐</button>
+            <button class="tab" data-game="sudoku">🔢 数独</button>
+            <button class="tab" data-game="minesweeper">💣 扫雷</button>
+          </div>
+        </div>
+        <div id="gameBody"></div>
+      </section>
+
+    </div>
+
+    <footer class="foot">
+      <span>Miracle Workbench · 数据保存在本机，可通过同步码在手机与电脑之间同步</span>
+      <span id="footSync">未开启同步</span>
+    </footer>
+  </main>
+
+  <!-- ============ 移动端底部导航 ============ -->
+  <nav class="tabbar" id="tabbar">
+    <button class="tb-item is-active" data-view="home"><i>🕵️</i><span>首页</span></button>
+    <button class="tb-item" data-view="hot"><i>🔥</i><span>热搜</span></button>
+    <button class="tb-item" data-view="film"><i>🎬</i><span>影视</span></button>
+    <button class="tb-item" data-view="study"><i>📖</i><span>学习</span></button>
+    <button class="tb-item" data-view="overtime"><i>🌙</i><span>加班</span></button>
+    <button class="tb-item" data-view="wool"><i>🐑</i><span>羊毛</span></button>
+    <button class="tb-item" data-view="ledger"><i>🧾</i><span>记账</span></button>
+    <button class="tb-item" data-view="todo"><i>📌</i><span>待办</span></button>
+    <button class="tb-item" data-view="game"><i>🎮</i><span>游戏</span></button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- 弹窗 -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="modalTitle">标题</h3>
+      <button class="icon-btn" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="assets/data/catti.js"></script>
+<script src="assets/data/economist.js"></script>
+<script src="assets/js/core.js"></script>
+<script src="assets/js/home.js"></script>
+<script src="assets/js/hot.js"></script>
+<script src="assets/js/film.js"></script>
+<script src="assets/js/study.js"></script>
+<script src="assets/js/overtime.js"></script>
+<script src="assets/js/wool.js"></script>
+<script src="assets/js/ledger.js"></script>
+<script src="assets/js/todo.js"></script>
+<script src="assets/js/games/sokoban.js"></script>
+<script src="assets/js/games/match3.js"></script>
+<script src="assets/js/games/sudoku.js"></script>
+<script src="assets/js/games/minesweeper.js"></script>
+<script src="assets/js/games/index.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
