@@ -1,0 +1,17 @@
+{
+  "name": "Miracle 工作台",
+  "short_name": "Miracle",
+  "description": "名侦探柯南主题纯静态工作台 · 真相只有一个",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#12275a",
+  "theme_color": "#12275a",
+  "categories": ["productivity", "utilities"],
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
