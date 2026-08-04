@@ -263,6 +263,14 @@
     const totalH = list.reduce((s, r) => s + (+r.hours || 0), 0);
     const late = cur.filter(r => r.end && (+r.end.slice(0, 2) >= 22 || +r.end.slice(0, 2) <= 4)).length;
 
+    // hero 区：本月真实统计（当前自然月），避免 hero 显示写死的 0/¥0
+    const cm = M.month();
+    const cmList = list.filter(r => M.month(r.date) === cm);
+    const cmH = cmList.reduce((s, r) => s + (+r.hours || 0), 0);
+    const cmP = cmList.reduce((s, r) => s + payOf(r), 0);
+    const hH = $('#otMonthHours'); if (hH) hH.textContent = M.num(cmH) + ' h';
+    const hP = $('#otMonthPay'); if (hP) hP.textContent = M.money(cmP);
+
     // 每月薪资统计（固定滚动一年，按月份升序，独立显示「XX年XX月」；不与日历/明细筛选联动）
     const salRows = twelve.map(m => Object.assign({ m, label: (+m.slice(0, 4)) + '年' + (+m.slice(5)) + '月' }, salaryBreak(m)))
       .sort((a, b) => a.m.localeCompare(b.m));
@@ -423,7 +431,7 @@
   }
 
   M.overtime = {
-    init() { M.on('data', () => { }); render(); },
+    init() { M.on('data', render); render(); },
     render
   };
 })(window.MW);
