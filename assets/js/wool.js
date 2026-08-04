@@ -20,7 +20,6 @@
     r = r || {};
     const sv = isRecv(r) ? 'received' : 'pending';
     return `<div class="form-grid">
-      <div class="field"><label>日期</label><input class="input" type="date" id="wDate" value="${r.date || M.today()}"></div>
       <div class="field"><label>来源</label><input class="input" id="wSrc" value="${M.esc(r.platform || '')}" placeholder="如：支付宝 / 银行App / 线下门店"></div>
       <div class="field"><label>类型</label><select id="wCat">${Object.keys(CATS).map(k => `<option value="${k}" ${(r.cat || 'cashback') === k ? 'selected' : ''}>${CATS[k]}</option>`).join('')}</select></div>
       <div class="field"><label>状态</label><select id="wSt">
@@ -40,15 +39,17 @@
     M.modal(id ? '编辑羊毛记录' : '新增羊毛记录', formHTML(r), body => {
       $('#wCancel', body).onclick = M.closeModal;
       $('#wSave', body).onclick = () => {
+        const st = $('#wSt', body).value;
         const o = {
-          date: $('#wDate', body).value || M.today(),
           platform: $('#wSrc', body).value.trim() || '—',
           cat: $('#wCat', body).value,
-          status: $('#wSt', body).value,
+          status: st,
           cost: +$('#wCost', body).value || 0,
           arrive: $('#wArr', body).value,
           name: $('#wName', body).value.trim(),
-          note: $('#wNote', body).value.trim()
+          note: $('#wNote', body).value.trim(),
+          // 收到日：状态为「已收到」时，编辑旧记录保留原收到日，新建则取今天；改回「未收到」则清空
+          recvDate: st === 'received' ? (id && r && r.recvDate ? r.recvDate : M.today()) : ''
         };
         if (!o.name) { M.toast('请填写项目名称', 'warn'); return; }
         if (id) M.update('wool', id, o); else M.add('wool', o);
@@ -67,7 +68,7 @@
 
     // 每年笔数（近三年）
     const byYear = {};
-    list.forEach(r => { const y = (r.date || '').slice(0, 4); if (y) byYear[y] = (byYear[y] || 0) + 1; });
+    list.forEach(r => { const y = (r.arrive || '').slice(0, 4); if (y) byYear[y] = (byYear[y] || 0) + 1; });
     const yearYears = Object.keys(byYear).sort().slice(-3);
     const yearBars = yearYears.map((y, i) => ({ label: y + '年', value: byYear[y], color: COLORS[i % COLORS.length] }));
     const yearMax = yearBars.reduce((m, b) => Math.max(m, b.value), 0);
@@ -75,7 +76,7 @@
     // 每月笔数（最近 6 个月）
     const monthSet = {};
     for (let i = 5; i >= 0; i--) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); monthSet[M.month(M.today(d))] = 0; }
-    list.forEach(r => { const m = (r.date || '').slice(0, 7); if (m in monthSet) monthSet[m]++; });
+    list.forEach(r => { const m = (r.arrive || '').slice(0, 7); if (m in monthSet) monthSet[m]++; });
     const monthBars = Object.keys(monthSet).sort().map((m, i) => ({ label: m.slice(5) + '月', value: monthSet[m], color: COLORS[i % COLORS.length] }));
 
     const srcOpts = srcs(list);
@@ -83,7 +84,7 @@
     let view = list;
     if (fStatus !== 'all') view = view.filter(r => keyOf(r) === fStatus);
     if (fSrc !== 'all') view = view.filter(r => (r.platform || '') === fSrc);
-    view = view.sort((a, b) => b.date.localeCompare(a.date));
+    view = view.sort((a, b) => (b.arrive || '').localeCompare((a.arrive || '')));
 
     box.innerHTML = `
     <div class="grid g4" style="margin-bottom:14px">
@@ -111,6 +112,7 @@
       <div class="tool-right">
         <select class="input" id="wSrcF" style="width:130px"><option value="all">全部来源</option>${srcOpts.map(s => `<option ${fSrc === s ? 'selected' : ''}>${M.esc(s)}</option>`).join('')}</select>
         <button class="btn btn-sm btn-ghost" id="wExport">导出 CSV</button>
+        <button class="btn btn-sm btn-danger" id="wReset">重置</button>
         <button class="btn btn-sm" id="wNew">＋ 新增</button>
       </div>
     </div>
@@ -118,14 +120,14 @@
     <div class="card">
       <h3 class="card-h"><span class="dot"></span>羊毛台账 <span class="more">${view.length} 条</span></h3>
       ${view.length ? `<div class="tb-wrap"><table>
-        <thead><tr><th>日期</th><th>项目</th><th>来源</th><th>类型</th><th>投入</th><th>兑换日</th><th>状态</th><th></th></tr></thead>
+        <thead><tr><th>兑换日</th><th>收到日</th><th>项目</th><th>来源</th><th>类型</th><th>投入</th><th>状态</th><th></th></tr></thead>
         <tbody>${view.map(r => `<tr>
-          <td class="note">${r.date.slice(5)}</td>
+          <td class="note">${(r.arrive || '').slice(5) || '—'}</td>
+          <td class="note">${(r.recvDate || '').slice(5) || '—'}</td>
           <td><b>${M.esc(r.name)}</b>${r.note ? '<div class="note">' + M.esc(r.note) + '</div>' : ''}</td>
           <td><span class="pill">${M.esc(r.platform || '—')}</span></td>
           <td class="note">${CATS[r.cat] || '—'}</td>
           <td class="note">${r.cost ? M.money(r.cost) : '—'}</td>
-          <td class="note">${r.arrive || '—'}</td>
           <td><span class="tag" style="background:${curST(r).c}22;color:${curST(r).c}">${curST(r).n}</span></td>
           <td><div class="t-act">
             ${!isRecv(r) ? `<button class="btn btn-sm" data-ok="${r.id}">收到</button>` : ''}
@@ -140,8 +142,15 @@
     $('#wNew').onclick = () => openForm();
     const n2 = $('#wNew2'); if (n2) n2.onclick = () => openForm();
     $('#wExport').onclick = exportCSV;
+    const resetBtn = $('#wReset', box); if (resetBtn) resetBtn.onclick = () => M.confirm('确定清空全部羊毛记录吗？此操作不可恢复，且会同步到云端。', () => {
+      M.db().wool = [];   // 直接清空整张表（比逐项软删除更彻底）
+      M.save();
+      fStatus = 'all'; fSrc = 'all';
+      render();
+      M.toast('已清空全部羊毛记录', 'ok');
+    });
     $$('[data-edit]', box).forEach(b => b.onclick = () => openForm(b.dataset.edit));
-    $$('[data-ok]', box).forEach(b => b.onclick = () => { M.update('wool', b.dataset.ok, { status: 'received', arrive: M.today() }); M.toast('已标记收到 🎉', 'ok'); render(); });
+    $$('[data-ok]', box).forEach(b => b.onclick = () => { M.update('wool', b.dataset.ok, { status: 'received', recvDate: M.today() }); M.toast('已标记收到 🎉', 'ok'); render(); });
     $$('[data-del]', box).forEach(b => b.onclick = () => M.confirm('确定删除这条羊毛记录？', () => { M.remove('wool', b.dataset.del); render(); M.toast('已删除', 'ok'); }));
 
     const t = $('#woolTotal'), p = $('#woolPending');
@@ -150,9 +159,9 @@
   }
 
   function exportCSV() {
-    const rows = [['日期', '项目', '来源', '类型', '投入', '兑换日', '状态', '备注']];
-    all().sort((a, b) => a.date.localeCompare(b.date)).forEach(r => rows.push([
-      r.date, r.name, r.platform || '', CATS[r.cat] || '', r.cost || 0, r.arrive || '', curST(r).n, r.note || ''
+    const rows = [['项目', '来源', '类型', '投入', '兑换日', '收到日', '状态', '备注']];
+    all().sort((a, b) => (a.arrive || '').localeCompare((b.arrive || ''))).forEach(r => rows.push([
+      r.name, r.platform || '', CATS[r.cat] || '', r.cost || 0, r.arrive || '', r.recvDate || '', curST(r).n, r.note || ''
     ]));
     const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
     const a = document.createElement('a');
