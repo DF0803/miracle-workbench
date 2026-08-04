@@ -22,6 +22,15 @@
   const CACHE = 'miracle.hot.v1';
   const HOUR = 3600 * 1000;
   const PROXY = 'https://api.allorigins.win/raw?url=';
+  const REQ_TTL = 9000; // 单个平台请求超时（毫秒），防止某一源卡死拖垮整轮刷新
+
+  // 带超时的 fetch：任一上游长时间无响应时主动中止，避免 allSettled 永不收尾
+  function timedFetch(url, opts) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), REQ_TTL);
+    return fetch(url, Object.assign({ signal: ctrl.signal, cache: 'no-store' }, opts || {}))
+      .finally(() => clearTimeout(t));
+  }
 
   let state = { data: {}, ts: 0, tab: 'all', kw: '', loading: false };
 
@@ -44,7 +53,7 @@
 
   async function fetchOne(p) {
     if (p.proxy) return await fetchXhs(p);
-    const res = await fetch(p.url + '?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
+    const res = await timedFetch(p.url + '?t=' + Math.floor(Date.now() / 60000));
     const j = await res.json();
     if (!j || j.code !== 200 || !j.data) throw new Error('接口返回异常');
     return normalize(p.id, j.data);
@@ -70,7 +79,7 @@
     let lastErr;
     for (const u of p.urls) {
       try {
-        const r = await fetch(PROXY + encodeURIComponent(u) + '&t=' + Date.now(), { cache: 'no-store' });
+        const r = await timedFetch(PROXY + encodeURIComponent(u) + '&t=' + Date.now());
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const txt = await r.text();
         let j; try { j = JSON.parse(txt); } catch (e) { throw new Error('非 JSON 响应'); }
@@ -88,16 +97,22 @@
     if (state.loading) return;
     if (!force && state.ts && Date.now() - state.ts < HOUR) { render(); return; }
     state.loading = true; render();
-    const results = await Promise.allSettled(PLATS.map(fetchOne));
     let ok = 0;
-    results.forEach((r, i) => {
-      const id = PLATS[i].id;
-      if (r.status === 'fulfilled' && r.value.length) { state.data[id] = r.value; ok++; }
-      else if (!state.data[id]) state.data[id] = null;
-    });
-    state.ts = Date.now(); state.loading = false;
-    try { localStorage.setItem(CACHE, JSON.stringify({ ts: state.ts, data: state.data })); } catch (e) { }
-    render();
+    try {
+      const results = await Promise.allSettled(PLATS.map(fetchOne));
+      results.forEach((r, i) => {
+        const id = PLATS[i].id;
+        if (r.status === 'fulfilled' && r.value.length) { state.data[id] = r.value; ok++; }
+        else if (!state.data[id]) state.data[id] = null;
+      });
+    } finally {
+      // 无论成功/失败/超时，都保证 state.ts 与 state.loading 收尾，
+      // 否则 loading 卡死会永久阻断后续所有自动刷新。
+      state.ts = Date.now();
+      state.loading = false;
+      try { localStorage.setItem(CACHE, JSON.stringify({ ts: state.ts, data: state.data })); } catch (e) { }
+      render();
+    }
     if (force) M.toast(ok ? ('已更新 ' + ok + ' / 6 个平台') : '全部平台获取失败，请检查网络', ok ? 'ok' : 'err');
   }
 
@@ -146,6 +161,10 @@
   function render() {
     const box = $('#hotBody'); if (!box) return;
     box.innerHTML = '<div class="hot-grid">' + PLATS.map(p => platCard(p, 20)).join('') + '</div>';
+    // 已加载平台数（用于右上角「N/6 平台」）
+    let loaded = 0;
+    PLATS.forEach(p => { const a = state.data[p.id]; if (a && a.length) loaded++; });
+    const pc = $('#hotPlatCount'); if (pc) pc.textContent = loaded;
     const up = $('#hotUpdated');
     if (up) up.textContent = state.ts ? new Date(state.ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '--:--';
     tick();
