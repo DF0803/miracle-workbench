@@ -253,6 +253,13 @@ a{color:inherit;text-decoration:none}
 .date-range .ot-sel:hover{background:var(--surface)}
 .dr-sep{color:var(--muted);font-size:12px}
 .date-range .dr-label{font-size:11px;color:var(--muted);font-weight:600;padding:0 2px}
+.m-nav{display:inline-flex;align-items:center;gap:6px}
+.m-nav .btn{border-radius:8px;display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;font-size:12.5px;line-height:1.2}
+.m-nav-arrow{width:30px;height:28px;padding:0;font-size:16px;line-height:1}
+.m-nav-label{min-width:88px;text-align:center;font-weight:700;color:var(--c-ot,#7b5cff);font-size:13.5px}
+.m-rng{display:inline-flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:9px}
+.m-rng .btn{border-radius:7px;padding:3px 9px;font-size:12px;line-height:1.2}
+.m-rng .btn.on{background:var(--c-ot,#7b5cff);color:#fff;border-color:transparent}
 .grid{display:grid;gap:14px}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
