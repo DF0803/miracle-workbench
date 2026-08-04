@@ -2,7 +2,7 @@
    Miracle · Service Worker
    离线缓存：优先使用缓存，安装到主屏后可离线访问。
    ========================================================== */
-const CACHE_NAME = 'miracle-pwa-v1';
+const CACHE_NAME = 'miracle-pwa-v2';
 const SHELL = [
   './',
   './index.html',
