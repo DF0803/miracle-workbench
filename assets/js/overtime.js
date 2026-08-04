@@ -16,14 +16,14 @@
     return n.getFullYear() + '-' + M.pad2(n.getMonth() + 1) + '-' + M.pad2(new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate());
   }
   let scope = { from: defaultFrom(), to: defaultTo() };       // 顶部「概览」区间：仅控制 4 张统计卡
-  let calScope = { from: defaultFrom(), to: defaultTo() };    // 日历/明细区间：与顶部选择器相互独立
-  let drillMonth = null;   // 日历热力图「放大某月」状态；null=年度视图
+  let viewMonth = M.month();   // 「每日加班分布」当前查看的月份（单月视图，支持上/下月时间导航）
+  let salRange = 12;           // 「每月薪资统计」时间区间（月）：3 / 6 / 12 / 24
   let salHi = M.month();   // 每月薪资统计「在看」高亮月份（独立，不与日历/明细联动）
 
-  // 滚动 12 个月（最早→最新），相对今天生成
-  function last12() {
+  // 最近 N 个月（最早→最新），相对今天生成
+  function lastN(n) {
     const out = [];
-    for (let i = 11; i >= 0; i--) {
+    for (let i = n - 1; i >= 0; i--) {
       const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
       out.push(M.month(M.today(d)));
     }
@@ -244,15 +244,16 @@
     const list = all();
     // 顶部「概览」区间（scope）：驱动 4 张统计卡
     const cur = list.filter(r => r.date >= scope.from && r.date <= scope.to);
-    const twelve = last12();
     const single = isSingleState(scope);
     const full12 = isFull12State(scope);
     const mon = monthsInRange(scope.from, scope.to);
-    // 日历/明细区间（calScope）：与顶部相互独立
-    const calCur = list.filter(r => r.date >= calScope.from && r.date <= calScope.to);
-    const calSingle = isSingleState(calScope);
-    const calFull12 = isFull12State(calScope);
-    const calMon = monthsInRange(calScope.from, calScope.to);
+    // 「每日加班分布」视图月份（单月 + 时间导航）：与顶部「概览」区间相互独立
+    const vm = viewMonth;
+    const vmFrom = vm + '-01';
+    const vmTo = lastDayOf(vm);
+    const vmRecs = list.filter(r => r.date >= vmFrom && r.date <= vmTo);
+    const vmDays = new Set(vmRecs.map(r => r.date)).size;
+    const vmYear = +vm.slice(0, 4), vmMon = +vm.slice(5, 7);
 
     const mH = cur.reduce((s, r) => s + (+r.hours || 0), 0);
     const mP = cur.reduce((s, r) => s + payOf(r), 0);
@@ -271,8 +272,8 @@
     const hH = $('#otMonthHours'); if (hH) hH.textContent = M.num(cmH) + ' h';
     const hP = $('#otMonthPay'); if (hP) hP.textContent = M.money(cmP);
 
-    // 每月薪资统计（固定滚动一年，按月份升序，独立显示「XX年XX月」；不与日历/明细筛选联动）
-    const salRows = twelve.map(m => Object.assign({ m, label: (+m.slice(0, 4)) + '年' + (+m.slice(5)) + '月' }, salaryBreak(m)))
+    // 每月薪资统计（按所选时间区间 salRange 滚动，按月份升序，独立显示「XX年XX月」；不与日历/明细筛选联动）
+    const salRows = lastN(salRange).map(m => Object.assign({ m, label: (+m.slice(0, 4)) + '年' + (+m.slice(5)) + '月' }, salaryBreak(m)))
       .sort((a, b) => a.m.localeCompare(b.m));
     const salMax = Math.max(1, ...salRows.map(s => s.h));
     const totH = Math.round(salRows.reduce((s, x) => s + x.h, 0) * 10) / 10;
@@ -281,31 +282,14 @@
     const sumExtra = salRows.reduce((s, x) => s + x.extraNet, 0);
     const totSal = salRows.reduce((s, x) => s + x.total, 0);
 
-    // 每日加班分布（仅按 calScope 区间内每个月渲染；单月直接展示，多月用年度宫格；drillMonth=放大某月）
-    let calHTML;
-    if (drillMonth) {
-      const m = drillMonth;
-      const dm = new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
-      const dy = [];
-      for (let d = 1; d <= dm; d++) { const k = m + '-' + M.pad2(d); dy.push({ label: String(d), value: Math.round(calCur.filter(r => r.date === k).reduce((s, r) => s + (+r.hours || 0), 0) * 10) / 10 }); }
-      calHTML = calChart(m, dy);
-    } else if (calSingle) {
-      const m = calScope.from.slice(0, 7);
-      const dm = new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
-      const dy = [];
-      for (let d = 1; d <= dm; d++) { const k = m + '-' + M.pad2(d); dy.push({ label: String(d), value: Math.round(calCur.filter(r => r.date === k).reduce((s, r) => s + (+r.hours || 0), 0) * 10) / 10 }); }
-      calHTML = calChart(m, dy);
-    } else {
-      calHTML = '<div class="cal-year">' + calMon.map(m => {
-        const dy = []; const dm = new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
-        for (let d = 1; d <= dm; d++) { const k = m + '-' + M.pad2(d); dy.push({ label: String(d), value: Math.round(calCur.filter(r => r.date === k).reduce((s, r) => s + (+r.hours || 0), 0) * 10) / 10 }); }
-        return '<div class="cal-mon"><div class="cal-mon-h" data-drill="' + m + '" title="点击放大本月">'
-          + (+m.slice(5)) + '月 <span class="cal-drill-ico">🔍</span></div>' + calChart(m, dy) + '</div>';
-      }).join('') + '</div>';
-    }
+    // 每日加班分布：单月视图（当前查看月份）+ 上/下月时间导航
+    const dm = new Date(vmYear, vmMon, 0).getDate();
+    const dy = [];
+    for (let d = 1; d <= dm; d++) { const k = vm + '-' + M.pad2(d); dy.push({ label: String(d), value: Math.round(vmRecs.filter(r => r.date === k).reduce((s, r) => s + (+r.hours || 0), 0) * 10) / 10 }); }
+    const calHTML = calChart(vm, dy);
 
-    // 加班明细范围（仅跟随 calScope/日历区间）
-    const det = calCur;
+    // 加班明细范围（跟随「每日加班分布」的查看月份）
+    const det = vmRecs;
 
     box.innerHTML = `
     <div class="toolbar" style="margin-bottom:14px">
@@ -319,6 +303,7 @@
       <div class="tool-right">
         <button class="btn btn-sm btn-ghost" id="otCfg">⚙️ 计算参数</button>
         <button class="btn btn-sm btn-ghost" id="otExport">导出 CSV</button>
+        <button class="btn btn-sm btn-danger" id="otReset">重置</button>
       </div>
     </div>
 
@@ -329,7 +314,17 @@
       <div class="stat" style="--sc:#00976b"><div class="k">累计加班</div><div class="v">${M.num(totalH)} h</div><div class="s">共 ${list.length} 条记录 · 折合 ${M.num(Math.round(totalH / 8 * 10) / 10)} 个工作日</div></div>
     </div>
 
-    <div class="card" style="margin-bottom:14px"><h3 class="card-h"><span class="dot"></span>每月薪资统计（近 12 个月）<span class="more">点击月份行高亮「在看」</span></h3>
+    <div class="card" style="margin-bottom:14px"><h3 class="card-h"><span class="dot"></span>每月薪资统计
+      <span class="card-tools">
+        <div class="m-rng">
+          <button class="btn btn-sm btn-ghost ${salRange === 3 ? 'on' : ''}" data-rng="3">近3月</button>
+          <button class="btn btn-sm btn-ghost ${salRange === 6 ? 'on' : ''}" data-rng="6">近6月</button>
+          <button class="btn btn-sm btn-ghost ${salRange === 12 ? 'on' : ''}" data-rng="12">近12月</button>
+          <button class="btn btn-sm btn-ghost ${salRange === 24 ? 'on' : ''}" data-rng="24">近24月</button>
+        </div>
+        <span class="more">点击月份行高亮「在看」</span>
+      </span>
+    </h3>
       <div class="tb-wrap"><table class="ot-tbl ot-sal">
         <thead><tr><th>月份</th><th>时长(h)</th><th>加班费</th><th>基本工资</th><th>社保</th><th>公积金</th><th>加项</th><th>其他</th><th>当月薪资</th></tr></thead>
         <tbody>${salRows.map(s => `<tr class="${s.m === salHi ? 'cur' : ''}" data-sm="${s.m}">
@@ -344,12 +339,12 @@
           <td><b>${M.money(s.total)}</b></td>
         </tr>`).join('')}</tbody>
         <tfoot><tr>
-          <td><b>全年合计</b></td>
+          <td><b>${salRange} 个月合计</b></td>
           <td>${M.num(totH)}</td>
           <td>${M.money(totPay)}</td>
-          <td>${M.money(base * 12)}</td>
-          <td class="col-sub">${S.social ? '−' + M.money(S.social * 12) : '—'}</td>
-          <td class="col-sub">${S.fund ? '−' + M.money(S.fund * 12) : '—'}</td>
+          <td>${M.money(base * salRows.length)}</td>
+          <td class="col-sub">${S.social ? '−' + M.money(S.social * salRows.length) : '—'}</td>
+          <td class="col-sub">${S.fund ? '−' + M.money(S.fund * salRows.length) : '—'}</td>
           <td class="col-add">${sumAdd ? '+' + M.money(sumAdd) : '—'}</td>
           <td class="${sumExtra < 0 ? 'col-sub' : sumExtra > 0 ? 'col-add' : ''}">${sumExtra ? (sumExtra > 0 ? '+' : '−') + M.money(Math.abs(sumExtra)) : '—'}</td>
           <td><b>${M.money(totSal)}</b></td>
@@ -358,20 +353,20 @@
     </div>
 
     <div class="card" style="margin-bottom:14px"><h3 class="card-h"><span class="dot"></span>每日加班分布
-      <span class="card-tools">${drillMonth
-        ? '<button class="btn btn-sm btn-ghost" id="otBack">← 返回年度视图</button><span class="more">正在放大 ' + (+drillMonth.slice(5)) + '月</span>'
-        : '<span class="more">点击月份标题可放大 · 点击日期可记一笔</span>'}
-        <span class="date-range"><span class="dr-label">区间</span>
-          <input type="date" class="input ot-sel" id="otFrom" value="${calScope.from}">
-          <span class="dr-sep">—</span>
-          <input type="date" class="input ot-sel" id="otTo" value="${calScope.to}">
-        </span>
+      <span class="card-tools">
+        <div class="m-nav">
+          <button class="btn btn-sm btn-ghost m-nav-arrow" id="otPrevMon" title="上一月">‹</button>
+          <span class="m-nav-label" id="otMonLabel">${vmYear}年${vmMon}月</span>
+          <button class="btn btn-sm btn-ghost m-nav-arrow" id="otNextMon" title="下一月">›</button>
+          ${vm !== M.month() ? '<button class="btn btn-sm btn-ghost" id="otThisMon">回到本月</button>' : ''}
+        </div>
+        <span class="more">点击日期可记一笔 · 本月 ${vmDays} 天有加班</span>
       </span>
     </h3>${calHTML}</div>
 
     <div class="card">
       <h3 class="card-h"><span class="dot"></span>加班明细
-        <span class="card-tools"><span class="more">${det.length} 条 · ${calScope.from} ~ ${calScope.to}</span></span>
+        <span class="card-tools"><span class="more">${det.length} 条 · ${vmYear}年${vmMon}月</span></span>
       </h3>
       ${det.length ? `<div class="tb-wrap"><table>
         <thead><tr><th>日期</th><th>时段</th><th>时长</th><th>类型</th><th>项目</th><th>补偿</th><th>估算</th><th>状态</th><th></th></tr></thead>
@@ -386,7 +381,7 @@
           <td><span class="pill" style="${r.paid ? 'color:#00976b' : 'color:#d98200'}">${r.paid ? '已结算' : '未结算'}</span></td>
           <td><div class="t-act"><button class="btn btn-sm btn-ghost" data-edit="${r.id}">改</button><button class="btn btn-sm btn-ghost" data-del="${r.id}">删</button></div></td>
         </tr>`).join('')}</tbody></table></div>`
-        : `<div class="empty"><span class="e-ico">🌙</span>${calSingle ? '本月' : calFull12 ? '近 12 个月' : '该区间'}还没有加班记录 —— 这是好事<br><span class="note" style="margin-top:8px">点上方日历任意日期即可记一笔 ✍️</span></div>`}
+        : `<div class="empty"><span class="e-ico">🌙</span>${vmYear}年${vmMon}月还没有加班记录 —— 这是好事<br><span class="note" style="margin-top:8px">点上方日历任意日期即可记一笔 ✍️</span></div>`}
     </div>`;
 
     // 顶部选择器：仅改「概览」区间（4 张统计卡），不动日历/明细
@@ -398,22 +393,29 @@
     const topF = $('#otFromTop', box), topT = $('#otToTop', box);
     topF.onchange = () => setTopRange(topF.value, topT.value);
     topT.onchange = () => setTopRange(topF.value, topT.value);
-    // 日历选择器：仅改「日历/明细」区间，不动顶部概览
-    const setCalRange = (f, t) => {
-      if (!f || !t) return;
-      if (f > t) { const x = f; f = t; t = x; }
-      calScope.from = f; calScope.to = t; drillMonth = null; render();
+    // 「每日加班分布」时间导航：上/下月 + 回到本月
+    const shiftMonth = (delta) => {
+      const [y, m] = viewMonth.split('-').map(Number);
+      let ny = y, nm = m + delta;
+      if (nm < 1) { nm = 12; ny--; } else if (nm > 12) { nm = 1; ny++; }
+      viewMonth = ny + '-' + M.pad2(nm); render();
     };
-    const calF = $('#otFrom', box), calT = $('#otTo', box);
-    calF.onchange = () => setCalRange(calF.value, calT.value);
-    calT.onchange = () => setCalRange(calF.value, calT.value);
+    const prev = $('#otPrevMon', box); if (prev) prev.onclick = () => shiftMonth(-1);
+    const next = $('#otNextMon', box); if (next) next.onclick = () => shiftMonth(1);
+    const thisMon = $('#otThisMon', box); if (thisMon) thisMon.onclick = () => { viewMonth = M.month(); render(); };
     $('#otCfg').onclick = openSettings;
     $('#otExport').onclick = exportCSV;
+    const resetBtn = $('#otReset', box); if (resetBtn) resetBtn.onclick = () => M.confirm('确定清空全部加班记录吗？此操作不可恢复，且会同步到云端。', () => {
+      M.db().overtime = [];   // 直接清空整张表（比逐项软删除更彻底）
+      M.save();
+      viewMonth = M.month();
+      render();
+      M.toast('已清空全部加班记录', 'ok');
+    });
     $$('[data-edit]', box).forEach(b => b.onclick = () => openForm(b.dataset.edit));
     $$('[data-del]', box).forEach(b => b.onclick = () => M.confirm('确定删除这条加班记录？', () => { M.remove('overtime', b.dataset.del); render(); M.toast('已删除', 'ok'); }));
     $$('[data-calday]', box).forEach(b => b.onclick = () => openForm(null, b.dataset.calday));
-    $$('[data-drill]', box).forEach(b => b.onclick = () => { drillMonth = b.dataset.drill; render(); });
-    const back = $('#otBack', box); if (back) back.onclick = () => { drillMonth = null; render(); };
+    $$('[data-rng]', box).forEach(b => b.onclick = () => { salRange = +b.dataset.rng; render(); });
     $$('[data-sm]', box).forEach(b => b.onclick = () => { salHi = b.dataset.sm; render(); });
   }
 
